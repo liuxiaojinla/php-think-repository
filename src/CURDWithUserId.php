@@ -12,6 +12,9 @@ use think\model\Collection;
 use think\Paginator;
 
 /**
+ * 基于 CURD 封装「带 user_id」的快捷方法
+ * 必须同时 use CURD
+ * @mixin CURD
  * @template TModel of Model
  */
 trait CURDWithUserId

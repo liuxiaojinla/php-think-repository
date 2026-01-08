@@ -2,8 +2,8 @@
 
 namespace Xin\ThinkPHP\Repository;
 
-use app\service\repository\contract\Filter as FilterContract;
 use Xin\Support\Arr;
+use Xin\ThinkPHP\Repository\Contracts\Filter as FilterContract;
 
 abstract class Filter implements FilterContract
 {

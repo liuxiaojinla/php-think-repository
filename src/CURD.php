@@ -2,7 +2,8 @@
 
 namespace Xin\ThinkPHP\Repository;
 
-use app\service\repository\contract\Filter;
+use InvalidArgumentException;
+use LogicException;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
@@ -361,12 +362,12 @@ trait CURD
 		/** @var Model $model */
 		$model = $query->getModel();
 		if (!($model instanceof Model)) {
-			throw new \LogicException(static::class . 'use Model must be instance of Model');
+			throw new LogicException(static::class . 'use Model must be instance of Model');
 		}
 
 		// 数据不能为空
 		if (empty($data)) {
-			throw new \LogicException('数据不能为空！');
+			throw new LogicException('数据不能为空！');
 		}
 
 		// 获取允许的字段
@@ -374,7 +375,7 @@ trait CURD
 
 		// 保存数据
 		if ($model->allowField($allowFields)->save($data, true) === false) {
-			throw new \LogicException('保存失败！');
+			throw new LogicException('保存失败！');
 		}
 
 		// 刷新数据
@@ -413,6 +414,7 @@ trait CURD
 		$useTransaction = $useTransaction === null ? $this->useTransaction : $useTransaction;
 		if ($useTransaction) {
 			/** @var Model $info */
+			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 			$info = Db::transaction($handler);
 		} else {
 			$info = $handler();
@@ -452,7 +454,7 @@ trait CURD
 		/** @var Model $model */
 		$model = $info->getModel();
 		if (!($model instanceof Model)) {
-			throw new \LogicException(static::class . 'use Model must be instance of Model');
+			throw new LogicException(static::class . 'use Model must be instance of Model');
 		}
 
 		// 获取允许的字段
@@ -460,7 +462,7 @@ trait CURD
 
 		// 更新数据
 		if ($model->allowField($allowFields)->save($data) === false) {
-			throw new \LogicException("更新失败！");
+			throw new LogicException("更新失败！");
 		}
 
 		return $info;
@@ -496,6 +498,7 @@ trait CURD
 		$useTransaction = $useTransaction === null ? $this->useTransaction : $useTransaction;
 		if ($useTransaction) {
 			/** @var Model $info */
+			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 			$info = Db::transaction($handler);
 		} else {
 			$info = $handler();
@@ -526,7 +529,7 @@ trait CURD
 		if ($id instanceof Model) {
 			$modelClass = $this->newQuery();
 			if (!($id instanceof $modelClass)) {
-				throw new \LogicException(static::class . "::update use Model must be instance of {$modelClass}");
+				throw new LogicException(static::class . "::update use Model must be instance of {$modelClass}");
 			}
 
 			$info = $id;
@@ -552,7 +555,7 @@ trait CURD
 	{
 		$info = $this->findOrFail($idOrWhere);
 		if ($info->inc($field, $amount)->allowField([])->save($extra) === false) {
-			throw new \LogicException("更新失败！");
+			throw new LogicException("更新失败！");
 		}
 
 		return $info;
@@ -573,7 +576,7 @@ trait CURD
 	{
 		$info = $this->findOrFail($idOrWhere);
 		if ($info->dec($field, $amount)->allowField([])->save($extra) === false) {
-			throw new \LogicException("更新失败！");
+			throw new LogicException("更新失败！");
 		}
 
 		return $info;
@@ -646,8 +649,11 @@ trait CURD
 	 * @param string $field
 	 * @param mixed $value
 	 * @param callable|null $itemCallback
-	 * @param callable|null $preventCallback
-	 * @return bool
+	 * @param null $preventCallback
+	 * @return \think\Collection
+	 * @throws DataNotFoundException
+	 * @throws DbException
+	 * @throws ModelNotFoundException
 	 */
 	public function setManyValue($idsOrCallback, string $field, $value, callable $itemCallback = null, $preventCallback = null)
 	{
@@ -659,7 +665,7 @@ trait CURD
 			function (Query $query) use (&$idsOrCallback) {
 				$query->where($idsOrCallback);
 			}
-		)->get()->each(function (Model $item) use (&$field, &$value, &$itemCallback, &$preventCallback) {
+		)->select()->each(function (Model $item) use (&$field, &$value, &$itemCallback, &$preventCallback) {
 			if ($preventCallback && $preventCallback($item) === false) {
 				return;
 			}
@@ -799,7 +805,7 @@ trait CURD
 
 		// 是否是 model instance
 		if (!is_subclass_of($query, Model::class)) {
-			throw new \InvalidArgumentException('Query must be a model class-string or instance.');
+			throw new InvalidArgumentException('Query must be a model class-string or instance.');
 		}
 
 		$query = $query->db();
