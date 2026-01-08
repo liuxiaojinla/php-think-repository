@@ -625,12 +625,12 @@ trait CURD
 	 */
 	public function setValue($info, string $field, $value)
 	{
-		if (!$this->isAllowSetField($field)) {
+		if (!$this->isAllowedSetField($field)) {
 			throw new ValidateException("{$field} not in allow field list.");
 		}
 
 		// 验证规则
-		$allowSetFields = $this->getAllowSetFields();
+		$allowSetFields = $this->getAllowedSetFields();
 		if (isset($allowSetFields[$field]) && ($validateRule = $allowSetFields[$field])) {
 			$validator = new Validate();
 			$validator->rule([
@@ -682,9 +682,9 @@ trait CURD
 	 * @param string $field
 	 * @return bool
 	 */
-	public function isAllowSetField(string $field)
+	public function isAllowedSetField(string $field)
 	{
-		$allowSetFields = $this->getAllowSetFields();
+		$allowSetFields = $this->getAllowedSetFields();
 
 		return in_array($field, array_map('strval', array_keys($allowSetFields)), true);
 	}
@@ -694,7 +694,7 @@ trait CURD
 	 *
 	 * @return array
 	 */
-	public function getAllowSetFields()
+	public function getAllowedSetFields()
 	{
 		return [
 			'status' => 'in:1,2',
@@ -714,7 +714,7 @@ trait CURD
 	protected function deleteOn($callback, bool $isForce = false, bool $shouldForgetCache = null)
 	{
 		// 构建查询
-		$query = $this->withTrashedQuery();
+		$query = $this->deleteQuery();
 
 		// 触发删除前事件
 		$this->emitDestroying([], $query, $isForce);
@@ -794,7 +794,7 @@ trait CURD
 	 * 获取查询构造器
 	 * @return Query
 	 */
-	protected function query()
+	protected function query($withTrashed = false)
 	{
 		$query = $this->newQuery();
 
@@ -808,30 +808,66 @@ trait CURD
 			throw new InvalidArgumentException('Query must be a model class-string or instance.');
 		}
 
+		// 获取查询构造器
 		$query = $query->db();
+		$this->emit('BuildingQuery', $query);
 
-		return tap($query, function ($query) {
-			$this->emit('BuildingQuery', $query);
-		});
+		if ($withTrashed) {
+			// 获取带软删除的查询构造器
+			if (method_exists($query, 'withTrashed')) {
+				$query = $query->withTrashed();
+			}
+
+			// 触发构建带软删除的查询构造器事件
+			$this->emit('BuildingWithTrashedQuery', $query);
+		}
+
+		return $query;
 	}
 
 	/**
-	 * 获取带软删除的查询构造器
-	 * @return Query
+	 * 获取允许搜索字段
+	 * @return array
 	 */
-	protected function withTrashedQuery()
+	protected function getAllowedSearchFields()
 	{
-		$query = $this->query();
+		return [];
+	}
 
-		// 获取带软删除的查询构造器
-		if (method_exists($query, 'withTrashed')) {
-			$query = $query->withTrashed();
-		}
+	/**
+	 * 获取允许排序字段
+	 * @return array
+	 */
+	protected function getAllowedSortFields()
+	{
+		return [];
+	}
 
-		// 触发构建带软删除的查询构造器事件
-		$this->emit('BuildingWithTrashedQuery', $query);
+	/**
+	 * 获取过滤器选项
+	 * @return array
+	 */
+	protected function getFilterOptions()
+	{
+		return [];
+	}
 
-		return $query;
+	/**
+	 * 获取搜索关键字字段
+	 * @return array|null
+	 */
+	public function getSearchKeywordFields()
+	{
+		return null;
+	}
+
+	/**
+	 * 初始化默认的过滤器
+	 * @param Filter $filter
+	 * @return void
+	 */
+	protected function initDefaultFilter(Filter $filter)
+	{
 	}
 
 	/**
@@ -844,23 +880,36 @@ trait CURD
 	 */
 	protected function filterQuery($search = [], array $with = null, $orders = ['id desc'], array $options = [])
 	{
-		$query = $this->query();
+		$query = $this->query($options['with_trashed'] ?? false);
+
+		// 兼容 simple，只获取简单数据
 		if (method_exists($query->getModel(), 'simple') ||
 			method_exists($query->getModel(), 'scopeSimple')) {
 			$query->simple();
 		}
 
-		// 搜索条件
-		if ($search instanceof Filter) {
-			$filter = $search;
-			$search = $search->search();
-
-			$query->search($search);
-			$filter->apply($query);
-		} elseif (is_callable($search)) {
+		// 筛选条件
+		if (is_callable($search)) {
 			$search($query);
+		} elseif ($search instanceof Filter) {
+			$search->apply($query, $options);
 		} else {
-			$query->search($search);
+			$search = new Filter(
+				$search,
+				$this->getAllowedSearchFields(),
+				$this->getAllowedSortFields(),
+				$this->getFilterOptions()
+			);
+
+			// 配置搜索关键字字段
+			$searchKeywordsFields = $this->getSearchKeywordFields();
+			if ($searchKeywordsFields){
+				$search->setOption('search_keywords_fields', $searchKeywordsFields);
+			}
+
+			// 初始化默认的过滤器
+			$this->initDefaultFilter($search);
+			$search->apply($query, $options);
 		}
 
 		// 获取关联数据
@@ -922,7 +971,7 @@ trait CURD
 	 */
 	protected function deleteQuery()
 	{
-		return tap($this->withTrashedQuery(), function (Query $query) {
+		return tap($this->query(true), function (Query $query) {
 			$this->emit('BuildingDeleteQuery', $query);
 		});
 	}
