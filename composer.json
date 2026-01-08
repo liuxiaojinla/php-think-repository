@@ -1,0 +1,22 @@
+{
+  "name": "xin/thinkphp-repository",
+  "description": "ThinkPHP Repository - 一个用于简化数据库操作的仓库模式实现，支持多种数据库驱动，提供优雅的查询构建器和模型关系管理，适用于ThinkPHP8框架的现代化PHP项目。",
+  "type": "library",
+  "authors": [
+    {
+      "name": "晋",
+      "email": "657306123@qq.com"
+    }
+  ],
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=7.3.0",
+    "xin/support": "^1.0",
+    "xin/capsule": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Xin\\ThinkPHP\\Repository\\": "src/"
+    }
+  }
+}
