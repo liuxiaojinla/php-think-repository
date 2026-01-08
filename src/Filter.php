@@ -3,7 +3,6 @@
 namespace Xin\ThinkPHP\Repository;
 
 use BadMethodCallException;
-use Closure;
 use think\db\Query;
 use think\helper\Str;
 use Xin\Support\Arr;
@@ -160,7 +159,7 @@ class Filter implements FilterContract
 			$searchFields[$this->getSearchKeywordParameter()] = ['like', [], null];
 		}
 
-		static::withSearch($query, $searchFields, $this->getInput(), true, $options, $this);
+		static::withSearch($query, $searchFields, $this->getInput(), $options, $this);
 	}
 
 	/**
@@ -305,10 +304,20 @@ class Filter implements FilterContract
 		$result = [];
 		foreach ($search as $fieldName => $fieldConfig) {
 			if (is_numeric($fieldName)) {
-				$result[$fieldConfig] = ['eq', [], null];
+				$fieldName = $fieldConfig;
+				$fieldConfig = ['eq', [], null];
 			} else {
-				$result[$fieldName] = is_array($fieldConfig) ? $fieldConfig : [$fieldConfig, [], null];
+				if (!is_array($fieldConfig)) {
+					$fieldConfig = [$fieldConfig, [], null];
+				} else {
+					$fieldConfig = [
+						array_shift($fieldConfig) ?: 'eq',
+						array_shift($fieldConfig) ?: [],
+						array_shift($fieldConfig) ?: null,
+					];
+				}
 			}
+			$result[$fieldName] = $fieldConfig;
 		}
 		return $result;
 	}
@@ -336,6 +345,7 @@ class Filter implements FilterContract
 			$operator = 'between' == $operator ? 'between' : 'not between';
 		} elseif (in_array($operator, ['in', 'notIn'])) {
 			$condition = is_string($condition) ? explode(',', $condition) : $condition;
+			$condition = array_unique(array_filter(array_slice($condition, 0, 1000)));
 			$operator = 'in' == $operator ? 'in' : 'not in';
 		} elseif (in_array($operator, ['enum', 'notEnum'])) {
 			$conditionConfig = $fieldConfig[1];
@@ -358,11 +368,10 @@ class Filter implements FilterContract
 	 * @param Query $query
 	 * @param array $fields
 	 * @param array $data
-	 * @param bool $strict
 	 * @param array $options
 	 * @param mixed $targetInstance
 	 */
-	public static function withSearch(Query $query, array $fields, array $data = [], bool $strict = false, array $options = [], $targetInstance = null)
+	public static function withSearch(Query $query, array $fields, array $data = [], array $options = [], $targetInstance = null)
 	{
 		$fields = static::resolveSearchFields($fields);
 
@@ -375,33 +384,35 @@ class Filter implements FilterContract
 			// 获取筛选条件值
 			$condition = $data[$fieldName];
 
+			// 忽略空值
+			if ($condition === '' || $condition === []) {
+				continue;
+			}
+
 			// 判断是否是闭包
-			if ($fieldConfig instanceof Closure) {
-				$fieldConfig($targetInstance, $condition, $data);
+			$operator = $fieldConfig[0];
+			if (is_callable($operator)) {
+				$operator($query, $condition, $data);
+				continue;
+			}
+
+			// 默认搜索规则
+			$internalFieldName = $fieldConfig[2] ?: $fieldName;
+			$method = 'search' . Str::studly($internalFieldName) . 'Attr';
+			$methodAlias = 'withSearch' . Str::studly($internalFieldName);
+			if (method_exists($targetInstance, $method) ||
+				(method_exists($targetInstance, 'hasMacro') && $targetInstance->hasMacro($method))) {
+				$targetInstance->$method($query, $condition, $data);
+			} elseif (method_exists($targetInstance, $methodAlias) ||
+				(method_exists($targetInstance, 'hasMacro') && $targetInstance->hasMacro($methodAlias))) {
+				$targetInstance->$methodAlias($query, $condition, $data);
 			} else {
-				// 如果严格模式，忽略空值
-				if ($strict && (empty($condition) && !in_array($condition, ['0', 0]))) {
+				[$operator, $condition] = static::resolveExpression($operator, $condition, $fieldConfig);
+				if (is_null($operator)) {
 					continue;
 				}
 
-				$fieldName = $fieldConfig[2] ?: $fieldName;
-				$method = 'search' . Str::studly($fieldName) . 'Attr';
-				$methodAlias = 'withSearch' . Str::studly($fieldName);
-				if (method_exists($targetInstance, $method) ||
-					(method_exists($targetInstance, 'hasMacro') && $targetInstance->hasMacro($method))) {
-					$targetInstance->$method($query, $condition, $data);
-				} elseif (method_exists($targetInstance, $methodAlias) ||
-					(method_exists($targetInstance, 'hasMacro') && $targetInstance->hasMacro($methodAlias))) {
-					$targetInstance->$methodAlias($query, $condition, $data);
-				} else { // 默认搜索规则
-					$operator = $fieldConfig[0];
-					[$operator, $condition] = static::resolveExpression($operator, $condition, $fieldConfig);
-					if (is_null($operator)) {
-						continue;
-					}
-
-					$query->where($fieldName, $operator, $condition);
-				}
+				$query->where($fieldName, $operator, $condition);
 			}
 		}
 	}
