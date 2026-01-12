@@ -494,7 +494,7 @@ trait CURDEventEmitter
 	 * @param Model $info
 	 * @param Query $query
 	 * @param array $options
-	 * @return Model
+	 * @return TModel
 	 */
 	protected function retrieved($info, Query $query, array $options)
 	{
@@ -518,7 +518,7 @@ trait CURDEventEmitter
 	 * @param array $data
 	 * @param Model $info
 	 * @param string $scene
-	 * @return Model
+	 * @return TModel
 	 */
 	protected function written(array $data, $info, string $scene)
 	{

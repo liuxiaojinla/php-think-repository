@@ -131,6 +131,8 @@ class Filter implements FilterContract
 
 		// 自定义
 		$this->customize($query, $options);
+
+		return $query;
 	}
 
 	/**
@@ -207,7 +209,7 @@ class Filter implements FilterContract
 	 */
 	public function getSearchKeywordFields()
 	{
-		return $this->getOption('search_keywords_fields', []);
+		return $this->getOption('search_keywords_fields', $this->getOption('searchKeywordsFields', []));
 	}
 
 	/**
@@ -216,7 +218,7 @@ class Filter implements FilterContract
 	 */
 	public function getSearchKeywordParameter()
 	{
-		return $this->getOption('search_keywords_parameter', "keywords");
+		return $this->getOption('search_keywords_parameter', $this->getOption('searchKeywordsParameter', 'keywords'));
 	}
 
 	/**

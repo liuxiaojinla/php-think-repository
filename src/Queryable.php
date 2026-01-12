@@ -81,21 +81,7 @@ trait Queryable
 		} elseif ($search instanceof Filter) {
 			$search->apply($query, $options);
 		} else {
-			$search = new Filter(
-				$search,
-				$this->getAllowedSearchFields(),
-				$this->getAllowedSortFields(),
-				$this->getFilterOptions()
-			);
-
-			// 配置搜索关键字字段
-			$searchKeywordsFields = $this->getSearchKeywordFields();
-			if ($searchKeywordsFields){
-				$search->setOption('search_keywords_fields', $searchKeywordsFields);
-			}
-
-			// 初始化默认的过滤器
-			$this->initDefaultFilter($search);
+			$search = $this->newFilter($search);
 			$search->apply($query, $options);
 		}
 

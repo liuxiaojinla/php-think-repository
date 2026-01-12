@@ -9,11 +9,8 @@ interface Filter
 	/**
 	 * 场景级基础约束（状态、权限、排序、字段等）
 	 * @param Query $query
-	 * @param array $filter
-	 * @param array $with
-	 * @param array $order
 	 * @param array $options
-	 * @return void
+	 * @return Query
 	 */
 	public function apply(Query $query, array $options = []);
 }
