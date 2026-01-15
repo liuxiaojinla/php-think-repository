@@ -72,7 +72,8 @@ trait Queryable
 		// 兼容 simple，只获取简单数据
 		if (method_exists($query->getModel(), 'simple') ||
 			method_exists($query->getModel(), 'scopeSimple')) {
-			$query->simple();
+			/** @var Query $query */
+			$query = $query->simple();
 		}
 
 		// 筛选条件
