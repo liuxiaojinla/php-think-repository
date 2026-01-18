@@ -97,7 +97,7 @@ trait Queryable
 		}
 
 		// Query 应用更多的查询条件
-		$this->applyQueryForOptions($query, $options);
+		$this->applyQueryFormOptions($query, $options);
 
 		return tap($query, function (Query $query) {
 			$this->emit('BuildingFilterQuery', $query);
@@ -132,7 +132,7 @@ trait Queryable
 		}
 
 		// Query 应用更多的查询条件
-		$this->applyQueryForOptions($query, $options);
+		$this->applyQueryFormOptions($query, $options);
 
 		return tap($query, function (Query $query) {
 			$this->emit('BuildingFindQuery', $query);
@@ -156,49 +156,36 @@ trait Queryable
 	 * @param array $options
 	 * @return void
 	 */
-	private function applyQueryForOptions(Query $query, array $options)
+	private function applyQueryFormOptions(Query $query, array $options)
 	{
 		// 处理字段
 		if (!empty($options['fields'])) {
 			$query->field($options['fields']);
 		}
 
-		// 处理关联计数
-		if (!empty($options['withCount'])) {
-			$query->withCount($options['withCount']);
-		} elseif (!empty($options['withCounts'])) {
-			$query->withCount($options['withCounts']);
-		}
-
-		// 处理关联求和
-		if (!empty($options['withSum'])) {
-			foreach ($options['withSum'] as $relation => $column) {
-				$query->withSum($relation, $column);
-			}
-		}
-
-		// 处理关联平均
-		if (!empty($options['withAvg'])) {
-			foreach ($options['withAvg'] as $relation => $column) {
-				$query->withAvg($relation, $column);
-			}
-		}
-
-		// 处理关联最小
-		if (!empty($options['withMin'])) {
-			foreach ($options['withMin'] as $relation => $column) {
-				$query->withMin($relation, $column);
-			}
-		}
-
-		// 处理关联最大
-		if (!empty($options['withMax'])) {
-			foreach ($options['withMax'] as $relation => $column) {
-				$query->withMax($relation, $column);
-			}
-		}
+		// 处理关联聚合查询
+		$this->applyRelationAggregateQueryFormOptions($query, $options);
 
 		// 处理排序
+		$this->applyOrderQueryFormOptions($query, $options);
+
+		// 处理偏移与偏移
+		$this->applyPaginationQueryFormOptions($query, $options);
+
+		// 自定义查询条件
+		if (!empty($options['where'])) {
+			$query->where($options['where']);
+		}
+	}
+
+	/**
+	 * 应用排序查询
+	 * @param Query $query
+	 * @param array $options
+	 * @return void
+	 */
+	private function applyOrderQueryFormOptions(Query $query, array $options)
+	{
 		$orders = $options['orders'] ?? [];
 		if (!is_array($orders)) {
 			$orders = [$orders];
@@ -215,8 +202,16 @@ trait Queryable
 				call_user_func($orders, $query);
 			}
 		}
+	}
 
-		// 处理偏移与偏移
+	/**
+	 * 应用分页查询
+	 * @param Query $query
+	 * @param array $options
+	 * @return void
+	 */
+	private function applyPaginationQueryFormOptions(Query $query, array $options)
+	{
 		if (!empty($options['offset']) && !empty($options['limit'])) {
 			$query->limit($options['offset'], $options['limit']);
 		} elseif (!empty($options['offset'])) {
@@ -224,10 +219,90 @@ trait Queryable
 		} elseif (!empty($options['limit'])) {
 			$query->limit(0, $options['limit']);
 		}
+	}
 
-		// 自定义查询条件
-		if (!empty($options['where'])) {
-			$query->where($options['where']);
+	/**
+	 * 应用关联聚合查询
+	 * @param Query $query
+	 * @param array $options
+	 * @return void
+	 */
+	private function applyRelationAggregateQueryFormOptions(Query $query, array $options)
+	{
+		// 处理关联计数
+		if (!empty($options['withCount'])) { // @deprecated
+			$query->withCount($options['withCount']);
+		} elseif (!empty($options['withCounts'])) { // @deprecated
+			$query->withCount($options['withCounts']);
+		} elseif (!empty($options['with_count'])) { // @deprecated
+			$query->withCount($options['with_count']);
+		} elseif (!empty($options['with_counts'])) { // @shouldUse
+			$query->withCount($options['with_counts']);
+		}
+
+		// 处理关联求和
+		if (!empty($options['withSum'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['withSum'], 'withSum');
+		} elseif (!empty($options['withSums'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['withSums'], 'withSum');
+		} elseif (!empty($options['with_sum'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['with_sum'], 'withSum');
+		} elseif (!empty($options['with_sums'])) { // @shouldUse
+			$this->applyRelationAggregateQuery($query, $options['with_sums'], 'withSum');
+		}
+
+		// 处理关联平均
+		if (!empty($options['withAvg'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['withAvg'], 'withAvg');
+		} elseif (!empty($options['withAvgs'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['withAvgs'], 'withAvg');
+		} elseif (!empty($options['with_avg'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['with_avg'], 'withAvg');
+		} elseif (!empty($options['with_avgs'])) { // @shouldUse
+			$this->applyRelationAggregateQuery($query, $options['with_avgs'], 'withAvg');
+		}
+
+		// 处理关联最小
+		if (!empty($options['withMin'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['withMin'], 'withMin');
+		} elseif (!empty($options['withMins'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['withMins'], 'withMin');
+		} elseif (!empty($options['with_min'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['with_min'], 'withMin');
+		} elseif (!empty($options['with_mins'])) { // @shouldUse
+			$this->applyRelationAggregateQuery($query, $options['with_mins'], 'withMin');
+		}
+
+		// 处理关联最大
+		if (!empty($options['withMax'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['withMax'], 'withMax');
+		} elseif (!empty($options['withMaxs'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['withMaxs'], 'withMax');
+		} elseif (!empty($options['with_max'])) { // @deprecated
+			$this->applyRelationAggregateQuery($query, $options['with_max'], 'withMax');
+		} elseif (!empty($options['with_maxs'])) { // @shouldUse
+			$this->applyRelationAggregateQuery($query, $options['with_maxs'], 'withMax');
+		}
+	}
+
+	/**
+	 * 关联聚合查询
+	 * @param Query $query
+	 * @param array<string,string|array{string,string|callable}> $relations
+	 * @param string $aggregate
+	 * @return void
+	 */
+	private function applyRelationAggregateQuery(Query $query, array $relations, string $aggregate)
+	{
+		foreach ($relations as $relation => $field) {
+			if (is_array($field)) {
+				$relation = [
+					$relation => isset($field[1]) ? $field[1] : null,
+				];
+				$field = $field[0];
+			}
+
+			$query->{$aggregate}($relation, $field);
 		}
 	}
 }
