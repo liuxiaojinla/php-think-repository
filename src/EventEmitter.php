@@ -15,7 +15,7 @@ use Xin\Support\Reflect;
  * @template TModel of Model
  * @template TKey of array-key
  */
-trait CURDEventEmitter
+trait EventEmitter
 {
 	/**
 	 * @var Event

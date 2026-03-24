@@ -6,7 +6,13 @@ use Xin\Support\Enum;
 
 final class CURDWriteScene extends Enum
 {
-    const CREATE = 'create';
+	/**
+	 * 新增
+	 */
+	public const CREATE = 'create';
 
-    const UPDATE = 'update';
+	/**
+	 * 修改
+	 */
+	public const UPDATE = 'update';
 }

@@ -5,7 +5,7 @@ namespace Xin\ThinkPHP\Repository;
 /**
  * CURD 缓存
  */
-trait CURDCaching
+trait Caching
 {
 	/**
 	 * 缓存是否开启

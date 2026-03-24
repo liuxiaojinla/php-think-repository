@@ -20,11 +20,14 @@ use Xin\Support\Reflect;
  * @template TModel of Model
  * @template TKey of array-key
  * @mixin Queryable<TModel>
- * @mixin CURDEventEmitter<TModel>
+ * @mixin EventEmitter<TModel>
  */
 trait CURD
 {
-	use Queryable, Filterable, CURDCaching, CURDEventEmitter;
+	use Queryable;
+	use Filterable;
+	use Caching;
+	use EventEmitter;
 
 	/**
 	 * @var bool
@@ -374,7 +377,14 @@ trait CURD
 
 		// 保存数据
 		if ($model->allowField($allowFields)->save($data, true) === false) {
-			throw new LogicException('保存失败！');
+			$title = Reflect::constant($model, 'TITLE', false);
+			throw new LogicException(($title ? $title : '') . '创建失败！');
+		}
+
+		//  flx： 虚假创建数据
+		if (empty($model->getOrigin())) {
+			$title = Reflect::constant($model, 'TITLE', false);
+			throw new LogicException(($title ? $title : '') . '创建数据为空！');
 		}
 
 		// 刷新数据
