@@ -16,19 +16,19 @@ class Filter implements FilterContract
 	 *
 	 * @var array
 	 */
-	protected $macros = [];
+	protected array $macros = [];
 
 	/**
 	 * 输入数据
 	 * @var array
 	 */
-	protected $input = [];
+	protected array $input = [];
 
 	/**
 	 * 配置
 	 * @var array
 	 */
-	protected $options = [];
+	protected array $options = [];
 
 	/**
 	 * 搜索字段
@@ -37,14 +37,14 @@ class Filter implements FilterContract
 	 * operator: like, notLike, leftLike, rightLike, between, in, notIn, enum, notEnum
 	 * @var array
 	 */
-	protected $searchFields = [];
+	protected array $searchFields = [];
 
 	/**
 	 * 排序字段
 	 * 示例：['id' => 'desc', 'name' => 'asc']
 	 * @var array
 	 */
-	protected $sortFields = [];
+	protected array $sortFields = [];
 
 	/**
 	 * Filter 构造函数
@@ -105,10 +105,10 @@ class Filter implements FilterContract
 	/**
 	 * 获取输入数据
 	 * @param string|null $key
-	 * @param mixed $default
+	 * @param mixed|null $default
 	 * @return mixed
 	 */
-	public function getInput(string $key = null, $default = null)
+	public function getInput(string $key = null, mixed $default = null)
 	{
 		return Arr::get($this->input, $key, $default);
 	}
@@ -188,10 +188,10 @@ class Filter implements FilterContract
 	/**
 	 * 标题搜索器
 	 * @param Query $query
-	 * @param string $value
+	 * @param string|array $value
 	 * @return void
 	 */
-	public function searchKeywordsAttr(Query $query, $value)
+	public function searchKeywordsAttr(Query $query, mixed $value)
 	{
 		$value = is_array($value) ? array_map(function ($item) {
 			return '%' . $item . '%';
@@ -236,10 +236,10 @@ class Filter implements FilterContract
 	/**
 	 * 获取配置
 	 * @param string $key
-	 * @param mixed $default
+	 * @param mixed|null $default
 	 * @return mixed
 	 */
-	public function getOption(string $key, $default = null)
+	public function getOption(string $key, mixed $default = null)
 	{
 		return Arr::get($this->options, $key, $default);
 	}
@@ -249,7 +249,7 @@ class Filter implements FilterContract
 	 * @param string $key
 	 * @param mixed $value
 	 */
-	public function setOption(string $key, $value)
+	public function setOption(string $key, mixed $value)
 	{
 		Arr::set($this->options, $key, $value);
 	}
@@ -282,9 +282,9 @@ class Filter implements FilterContract
 	 * @param object|callable $macro
 	 * @return void
 	 */
-	public function macro(string $name, $macro)
+	public function macro(string $name, mixed $macro)
 	{
-		$this->macro[$name] = $macro;
+		$this->macros[$name] = $macro;
 	}
 
 	/**
@@ -331,7 +331,7 @@ class Filter implements FilterContract
 	 * @param array $fieldConfig
 	 * @return array
 	 */
-	protected static function resolveExpression(string $operator, $condition, $fieldConfig)
+	protected static function resolveExpression(string $operator, mixed $condition, array $fieldConfig)
 	{
 		if (in_array($operator, ['like', 'notLike'])) {
 			$condition = '%' . $condition . '%';
@@ -371,9 +371,9 @@ class Filter implements FilterContract
 	 * @param array $fields
 	 * @param array $data
 	 * @param array $options
-	 * @param mixed $targetInstance
+	 * @param mixed|null $targetInstance
 	 */
-	public static function withSearch(Query $query, array $fields, array $data = [], array $options = [], $targetInstance = null)
+	public static function withSearch(Query $query, array $fields, array $data = [], array $options = [], mixed $targetInstance = null)
 	{
 		$fields = static::resolveSearchFields($fields);
 
@@ -425,9 +425,9 @@ class Filter implements FilterContract
 	 * @param array $orders
 	 * @param array $data
 	 * @param array $options
-	 * @param mixed $targetInstance
+	 * @param mixed|null $targetInstance
 	 */
-	public static function withSort(Query $query, array $orders, array $data = [], array $options = [], $targetInstance = null)
+	public static function withSort(Query $query, array $orders, array $data = [], array $options = [], mixed $targetInstance = null)
 	{
 	}
 
@@ -440,7 +440,7 @@ class Filter implements FilterContract
 	public function __call(string $method, array $arguments)
 	{
 		if ($this->hasMacro($method)) {
-			return call_user_func_array($this->macro[$method], $arguments);
+			return call_user_func_array($this->macros[$method], $arguments);
 		}
 
 		throw new BadMethodCallException(sprintf(

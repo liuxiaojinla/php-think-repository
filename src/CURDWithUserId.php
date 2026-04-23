@@ -2,7 +2,6 @@
 
 namespace Xin\ThinkPHP\Repository;
 
-
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
@@ -32,9 +31,9 @@ trait CURDWithUserId
 	 */
 	public function paginateByUserId(
 		int   $userId,
-			  $search = [],
+		mixed $search = [],
 		array $with = null,
-			  $orders = ['id desc'],
+		mixed $orders = ['id desc'],
 		array $options = []
 	)
 	{
@@ -123,7 +122,6 @@ trait CURDWithUserId
 			$this->getUserIdKey() => $userId,
 		], $with, $columns);
 	}
-
 
 	/**
 	 * 根据userId创建数据

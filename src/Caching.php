@@ -11,14 +11,14 @@ trait Caching
 	 * 缓存是否开启
 	 * @var bool
 	 */
-	protected $isCacheEnabled = false;
+	protected bool $isCacheEnabled = false;
 
 	/**
 	 * 优化应该刷新缓存标识
-	 * @param null|bool $shouldRefreshCache
+	 * @param bool|null $shouldRefreshCache
 	 * @return bool
 	 */
-	protected function optimizeShouldRefreshCache($shouldRefreshCache)
+	protected function optimizeShouldRefreshCache(?bool $shouldRefreshCache)
 	{
 		if ($shouldRefreshCache === null) {
 			$shouldRefreshCache = $this->isCacheEnabled;
@@ -32,7 +32,7 @@ trait Caching
 	 * @param bool|null $shouldRefreshCache
 	 * @return bool
 	 */
-	protected function isNeedRefreshCache($shouldRefreshCache)
+	protected function isNeedRefreshCache(?bool $shouldRefreshCache)
 	{
 		$shouldRefreshCache = $this->optimizeShouldRefreshCache($shouldRefreshCache);
 		if (!$shouldRefreshCache || !method_exists($this, 'updateCache')) {
@@ -47,7 +47,7 @@ trait Caching
 	 * @param bool|null $shouldRefreshCache
 	 * @return bool
 	 */
-	protected function isNeedUpdateCache($shouldRefreshCache)
+	protected function isNeedUpdateCache(?bool $shouldRefreshCache)
 	{
 		$shouldRefreshCache = $this->optimizeShouldRefreshCache($shouldRefreshCache);
 		if (!$shouldRefreshCache || !method_exists($this, 'updateCache')) {
@@ -62,7 +62,7 @@ trait Caching
 	 * @param bool|null $shouldRefreshCache
 	 * @return bool
 	 */
-	protected function isNeedForgetCache($shouldRefreshCache)
+	protected function isNeedForgetCache(?bool $shouldRefreshCache)
 	{
 		$shouldRefreshCache = $this->optimizeShouldRefreshCache($shouldRefreshCache);
 

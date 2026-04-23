@@ -32,12 +32,12 @@ trait CURD
 	/**
 	 * @var bool
 	 */
-	protected $useTransaction = false;
+	protected bool $useTransaction = false;
 
 	/**
 	 * @var array
 	 */
-	protected $deleteTogethers = [];
+	protected array $deleteTogethers = [];
 
 	/**
 	 * 数据过滤
@@ -48,7 +48,7 @@ trait CURD
 	 * @param array $options
 	 * @return Paginator<TModel>|Collection<TKey,TModel>|Model
 	 */
-	protected function filterOn(callable $callback, $search = [], array $with = null, $orders = ['id desc'], array $options = [])
+	protected function filterOn(callable $callback, mixed $search = [], array $with = null, mixed $orders = ['id desc'], array $options = [])
 	{
 		// 数据过滤查询器
 		$query = $this->filterQuery($search, $with, $orders, $options);

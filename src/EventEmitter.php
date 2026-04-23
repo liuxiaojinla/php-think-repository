@@ -18,15 +18,15 @@ use Xin\Support\Reflect;
 trait EventEmitter
 {
 	/**
-	 * @var Event
+	 * @var Event|null
 	 */
-	protected $emitter;
+	protected ?Event $emitter = null;
 
 	/**
 	 * 是否临时禁用所有查询事件
 	 * @var bool
 	 */
-	protected $isEventMuted = false;
+	protected bool $isEventMuted = false;
 
 	/**
 	 * 获取事件发射器
@@ -51,7 +51,7 @@ trait EventEmitter
 	 * @param mixed $data
 	 * @return array|null
 	 */
-	protected function emit($event, $data)
+	protected function emit(string $event, mixed $data)
 	{
 		return $this->emitter()->trigger($event, $data);
 	}
@@ -63,7 +63,7 @@ trait EventEmitter
 	 * @param bool $once
 	 * @return $this
 	 */
-	protected function listen(string $event, callable $callback, $once = false)
+	protected function listen(string $event, callable $callback, bool $once = false)
 	{
 		if ($once) {
 			$realCallback = $callback;
@@ -134,7 +134,7 @@ trait EventEmitter
 	 * @param bool $once
 	 * @return $this
 	 */
-	public function onRetrieving(callable $callback, $once = false)
+	public function onRetrieving(callable $callback, bool $once = false)
 	{
 		return $this->listen('Retrieving', $callback, $once);
 	}
@@ -145,7 +145,7 @@ trait EventEmitter
 	 * @param bool $once
 	 * @return $this
 	 */
-	public function onRetrieved(callable $callback, $once = false)
+	public function onRetrieved(callable $callback, bool $once = false)
 	{
 		return $this->listen('Retrieved', $callback, $once);
 	}
@@ -156,7 +156,7 @@ trait EventEmitter
 	 * @param bool $once
 	 * @return $this
 	 */
-	public function onWriting(callable $callback, $once = false)
+	public function onWriting(callable $callback, bool $once = false)
 	{
 		return $this->listen('Writing', $callback, $once);
 	}
@@ -167,7 +167,7 @@ trait EventEmitter
 	 * @param bool $once
 	 * @return $this
 	 */
-	public function onWritten(callable $callback, $once = false)
+	public function onWritten(callable $callback, bool $once = false)
 	{
 		return $this->listen('Written', $callback, $once);
 	}
@@ -178,7 +178,7 @@ trait EventEmitter
 	 * @param bool $once
 	 * @return $this
 	 */
-	public function onDestroying(callable $callback, $once = false)
+	public function onDestroying(callable $callback, bool $once = false)
 	{
 		return $this->listen('Destroying', $callback, $once);
 	}
@@ -189,7 +189,7 @@ trait EventEmitter
 	 * @param bool $once
 	 * @return $this
 	 */
-	public function onDestroyed(callable $callback, $once = false)
+	public function onDestroyed(callable $callback, bool $once = false)
 	{
 		return $this->listen('Destroyed', $callback, $once);
 	}
@@ -200,7 +200,7 @@ trait EventEmitter
 	 * @param bool $once
 	 * @return $this
 	 */
-	public function onDeleting(callable $callback, $once = false)
+	public function onDeleting(callable $callback, bool $once = false)
 	{
 		return $this->listen('Deleting', $callback, $once);
 	}
@@ -211,7 +211,7 @@ trait EventEmitter
 	 * @param bool $once
 	 * @return $this
 	 */
-	public function onDeleted(callable $callback, $once = false)
+	public function onDeleted(callable $callback, bool $once = false)
 	{
 		return $this->listen('Deleted', $callback, $once);
 	}
@@ -222,7 +222,7 @@ trait EventEmitter
 	 * @param array|callable $search
 	 * @param array $options
 	 */
-	protected function emitFiltering(Query $query, $search, array &$options)
+	protected function emitFiltering(Query $query, mixed $search, array &$options)
 	{
 		if ($this->isEventMuted()) {
 			return;
@@ -247,7 +247,7 @@ trait EventEmitter
 	 * @param array $options
 	 * @return Collection<TKey,TModel>|Paginator|mixed
 	 */
-	protected function emitFiltered($result, Query $query, $search, array $options)
+	protected function emitFiltered(mixed $result, Query $query, mixed $search, array $options)
 	{
 		if ($this->isEventMuted()) {
 			return $result;
@@ -368,10 +368,11 @@ trait EventEmitter
 	/**
 	 * 触发删除前事件
 	 * @param array $ids
+	 * @param Query $query
 	 * @param bool $isForce
 	 * @return void
 	 */
-	protected function emitDestroying($ids, Query $query, $isForce)
+	protected function emitDestroying($ids, Query $query, bool $isForce)
 	{
 		if ($this->isEventMuted()) {
 			return;
@@ -395,7 +396,7 @@ trait EventEmitter
 	 * @param bool $isForce
 	 * @return void
 	 */
-	protected function emitDestroyed($ids, $items, $isForce)
+	protected function emitDestroyed($ids, Collection $items, bool $isForce)
 	{
 		if ($this->isEventMuted()) {
 			return;
@@ -418,7 +419,7 @@ trait EventEmitter
 	 * @param bool $isForce
 	 * @return void
 	 */
-	protected function emitDeleting($info, $isForce)
+	protected function emitDeleting($info, bool $isForce)
 	{
 		if ($this->isEventMuted()) {
 			return;
@@ -440,7 +441,7 @@ trait EventEmitter
 	 * @param bool $isForce
 	 * @return void
 	 */
-	protected function emitDeleted($info, $isForce)
+	protected function emitDeleted($info, bool $isForce)
 	{
 		if ($this->isEventMuted()) {
 			return;
@@ -462,7 +463,7 @@ trait EventEmitter
 	 * @param array|callable $search
 	 * @param array $options
 	 */
-	protected function filtering(Query $query, $search, array &$options)
+	protected function filtering(Query $query, mixed $search, array &$options)
 	{
 	}
 
@@ -474,7 +475,7 @@ trait EventEmitter
 	 * @param array $options
 	 * @return Collection<TKey,TModel>|Paginator|mixed
 	 */
-	protected function filtered($result, Query $query, $search, array $options)
+	protected function filtered(Paginator|Collection $result, Query $query, mixed $search, array $options)
 	{
 		return $result;
 	}
@@ -528,10 +529,11 @@ trait EventEmitter
 	/**
 	 * 删除前事件
 	 * @param array $ids
+	 * @param Query $query
 	 * @param bool $isForce
 	 * @return void
 	 */
-	protected function destroying($ids, Query $query, $isForce)
+	protected function destroying($ids, Query $query, bool $isForce)
 	{
 	}
 
@@ -542,7 +544,7 @@ trait EventEmitter
 	 * @param bool $isForce
 	 * @return void
 	 */
-	protected function destroyed($ids, $items, $isForce)
+	protected function destroyed($ids, Collection $items, bool $isForce)
 	{
 	}
 
@@ -552,7 +554,7 @@ trait EventEmitter
 	 * @param bool $isForce
 	 * @return void
 	 */
-	protected function deleting($info, $isForce)
+	protected function deleting($info, bool $isForce)
 	{
 	}
 
@@ -562,7 +564,7 @@ trait EventEmitter
 	 * @param bool $isForce
 	 * @return void
 	 */
-	protected function deleted($info, $isForce)
+	protected function deleted($info, bool $isForce)
 	{
 	}
 }

@@ -59,13 +59,13 @@ trait Queryable
 
 	/**
 	 * 过滤查询器
-	 * @param mixed $search
+	 * @param mixed|array $search
 	 * @param array|null $with
-	 * @param array|string|callable $orders
+	 * @param array|callable|string $orders
 	 * @param array $options
 	 * @return Query
 	 */
-	protected function filterQuery($search = [], array $with = null, $orders = ['id desc'], array $options = [])
+	protected function filterQuery(mixed $search = [], array $with = null, mixed $orders = ['id desc'], array $options = [])
 	{
 		$query = $this->query($options['with_trashed'] ?? false);
 
@@ -114,7 +114,7 @@ trait Queryable
 	 * @throws DbException
 	 * @throws ModelNotFoundException
 	 */
-	protected function findQuery($idOrWhere, array $with = null, array $options = [])
+	protected function findQuery(mixed $idOrWhere, array $with = null, array $options = [])
 	{
 		$query = $this->query();
 
